@@ -11,6 +11,8 @@ public abstract class Menu {
     }
 
     public void ExecuteCommand(string inputCommand) {
+        // Dela upp kommandosträng (e.g login username password) i ord: ["login", "username", "password"]
+        // Varje ord blir ett element i resultat arrayen (commandParts).
         string[] commandParts = inputCommand.Split(" ");
 
         foreach (Command command in commands) {

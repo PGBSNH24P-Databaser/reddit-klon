@@ -1,6 +1,6 @@
 public class RegisterUserCommand : Command
 {
-    public RegisterUserCommand(IUserService userService, IMenuService menuService) : base("register-user", "Create a new user account.", userService, menuService)
+    public RegisterUserCommand(IUserService userService, IMenuService menuService, IPostService postService) : base("register-user", "Create a new user account.", userService, menuService, postService)
     {
     }
 

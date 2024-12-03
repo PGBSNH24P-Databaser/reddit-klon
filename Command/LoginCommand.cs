@@ -1,6 +1,6 @@
 public class LoginCommand : Command
 {
-    public LoginCommand(IUserService userService, IMenuService menuService) : base("login", "Login with username and password.", userService, menuService)
+    public LoginCommand(IUserService userService, IMenuService menuService, IPostService postService) : base("login", "Login with username and password.", userService, menuService, postService)
     {
     }
 
@@ -18,6 +18,6 @@ public class LoginCommand : Command
         }
 
         Console.WriteLine("You successfully logged in.");
-        menuService.SetMenu(new UserMenu());
+        menuService.SetMenu(new UserMenu(userService, menuService, postService));
     }
 }

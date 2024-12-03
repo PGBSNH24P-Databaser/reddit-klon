@@ -16,7 +16,7 @@ public class PostgresUserService : IUserService
             return null;
         }
 
-        var sql = @"SELECT * FROM users WHERE id = @id";
+        var sql = @"SELECT * FROM users WHERE user_id = @id";
         using var cmd = new NpgsqlCommand(sql, this.connection);
         cmd.Parameters.AddWithValue("@id", loggedInUser);
         

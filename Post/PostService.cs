@@ -1,9 +1,3 @@
-/*public interface IPostService {}
-
-public class PostgresPostService {
-    private IUserService userService;
-
-    public PostgresPostService(IUserService userService) {
-
-    }
-}*/
+public interface IPostService {
+    Post CreatePost(string content);
+}
