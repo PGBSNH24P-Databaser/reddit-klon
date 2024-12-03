@@ -11,14 +11,14 @@ users:
 
 posts: (inlägg eller kommentar)
 - post_id (PRIMARY KEY)
-- user_id (FOREIGN KEY -> users)
+- user_id (FOREIGN KEY -> users) (ON DELETE SET NULL)
 - parent_post_id NULLABLE (FOREIGN KEY -> posts)
 - content
 - creation timestamp
 
 user_likes:
-- user_id (FOREIGN KEY -> users)
-- post_id (FOREIGN KEY -> posts)
+- user_id (FOREIGN KEY -> users) (ON DELETE CASCADE)
+- post_id (FOREIGN KEY -> posts) (ON DELETE CASCADE)
 
 */
 
@@ -39,32 +39,46 @@ class Program
 
             CREATE TABLE IF NOT EXISTS posts (
                 post_id UUID PRIMARY KEY,
-                user_id UUID REFERENCES users(user_id),
+                user_id UUID REFERENCES users(user_id) ON DELETE SET NULL,
                 parent_post_id UUID REFERENCES posts(post_id),
                 content TEXT,
                 creation_timestamp TIMESTAMP
             );
 
             CREATE TABLE IF NOT EXISTS user_likes (
-                user_id UUID REFERENCES users(user_id),
-                post_id UUID REFERENCES posts(post_id)
+                user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+                post_id UUID REFERENCES posts(post_id) ON DELETE CASCADE
             );
         ";
 
         using var createTableCmd = new NpgsqlCommand(createTablesSql, connection);
         createTableCmd.ExecuteNonQuery();
 
-        var userService = new PostgresUserService(connection);
+        IUserService userService = new PostgresUserService(connection);
+        IMenuService menuService = new SimpleMenuService();
+        Menu initialMenu = new LoginMenu(userService, menuService);
+        menuService.SetMenu(initialMenu);
 
-        /*userService.RegisterUser("Ironman", "tonystark");
+        while(true) {
+            string? inputCommand = Console.ReadLine();
+            if (inputCommand != null) {
+                menuService.GetMenu().ExecuteCommand(inputCommand);
+            } else {
+                break;
+            }
+        }
+
+        // Denna kod ligger bara som referens
+        /*var userService = new PostgresUserService(connection);
+        userService.RegisterUser("Ironman", "tonystark");
         userService.RegisterUser("Superman", "superstrong");
         userService.RegisterUser("Batman", "awesome");*/
 
-        User? user = userService.Login("Ironman", "tonystark");
+        /*User? user = userService.Login("Ironman", "tonystark");
         if (user != null) {
             Console.WriteLine(user.Id);
         } else {
             Console.WriteLine("Wrong username or password");
-        }
+        }*/
     }
 }
