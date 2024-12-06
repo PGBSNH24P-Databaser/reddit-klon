@@ -40,7 +40,8 @@ class Program
             CREATE TABLE IF NOT EXISTS posts (
                 post_id UUID PRIMARY KEY,
                 user_id UUID REFERENCES users(user_id) ON DELETE SET NULL,
-                parent_post_id UUID REFERENCES posts(post_id),
+                parent_post_id UUID REFERENCES posts(post_id), -- Kopplar till inlägget/kommentaren ovanför i hierarkiet
+                original_post_id UUID REFERENCES posts(post_id), -- Kopplar till det originella inlägget (vi har lagt in detta i efterhand) 
                 content TEXT,
                 creation_timestamp TIMESTAMP
             );

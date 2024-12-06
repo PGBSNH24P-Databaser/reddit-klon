@@ -24,9 +24,10 @@ public class PostgresPostService : IPostService {
             ParentPostId = null,
         };
 
-        var sql = @"INSERT INTO posts (post_id, user_id, parent_post_id, content, creation_timestamp) VALUES (
+        var sql = @"INSERT INTO posts (post_id, user_id, parent_post_id, original_post_id, content, creation_timestamp) VALUES (
             @id,
             @user_id,
+            NULL,
             NULL,
             @content,
             @created_date
@@ -40,5 +41,61 @@ public class PostgresPostService : IPostService {
         cmd.ExecuteNonQuery();
 
         return post;
+    }
+
+    public List<Post> GetAllPosts() {
+        var sql = @"SELECT posts.post_id, posts.user_id, posts.parent_post_id, posts.original_post_id, posts.content, posts.creation_timestamp, users.user_id, users.name FROM posts LEFT JOIN users ON users.user_id = posts.user_id WHERE original_post_id IS NULL";
+        using var cmd = new NpgsqlCommand(sql, this.connection);
+        
+        using var reader = cmd.ExecuteReader();
+        
+        List<Post> posts = new List<Post>();
+        while (reader.Read()) {
+            Post post = new Post {
+                Id = reader.GetGuid(0),
+                User = reader.IsDBNull(1) ? null : new User {
+                    Id = reader.GetGuid(1),
+                    Name = reader.GetString(7),
+                    Password = "" // Vi behöver inte använda lösenordet så vi skippar den
+                },
+                ParentPostId = reader.IsDBNull(2) ? null : reader.GetGuid(2),
+                OriginalPostId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
+                Content = reader.GetString(4),
+                CreatedDateTime = reader.GetDateTime(5)
+            };
+
+            posts.Add(post);
+        }
+
+        return posts;
+    }
+
+    public List<Post> GetAllCommentsForPost(Guid postId)
+    {
+        var sql = @"SELECT posts.post_id, posts.user_id, posts.parent_post_id, posts.original_post_id, posts.content, posts.creation_timestamp, users.user_id, users.name FROM posts LEFT JOIN users ON users.user_id = posts.user_id WHERE original_post_id = @id";
+        using var cmd = new NpgsqlCommand(sql, this.connection);
+        cmd.Parameters.AddWithValue("@id", postId);
+        
+        using var reader = cmd.ExecuteReader();
+        
+        List<Post> posts = new List<Post>();
+        while (reader.Read()) {
+            Post post = new Post {
+                Id = reader.GetGuid(0),
+                User = reader.IsDBNull(1) ? null : new User {
+                    Id = reader.GetGuid(1),
+                    Name = reader.GetString(7),
+                    Password = "" // Vi behöver inte använda lösenordet så vi skippar den
+                },
+                ParentPostId = reader.IsDBNull(2) ? null : reader.GetGuid(2),
+                OriginalPostId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
+                Content = reader.GetString(4),
+                CreatedDateTime = reader.GetDateTime(5)
+            };
+
+            posts.Add(post);
+        }
+
+        return posts;
     }
 }

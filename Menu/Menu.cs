@@ -1,6 +1,9 @@
-// Login menu
-// User menu
-
+// Denna klass agerar som basklass till alla menyer
+// Den bestämmer vad alla menyer skall innehålla, som exempelvis:
+// - Kommandon som tillhör menyn (commands listan)
+// - En funktion för att exekvera kommandon (som tillhör menyn)
+// - En Display funktion som är till för att "visa upp" menyn
+//    - Den är abstrakt eftersom det är dem specifika menyerna (Login, User) som bestämmer hur de ser ut
 public abstract class Menu {
 
     private List<Command> commands = new List<Command>();
