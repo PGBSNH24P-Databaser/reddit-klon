@@ -1,4 +1,8 @@
-public interface IMenuService {
+// Ansvarar för att "hantera" menyer:
+// - Hämta aktiv meny
+// - Byta till ny (aktiv) meny
+public interface IMenuService
+{
     void SetMenu(Menu menu);
     Menu GetMenu();
 }
@@ -23,5 +27,5 @@ public class SimpleMenuService : IMenuService
 // Den skall bytas ut mot en "riktig" menu direkt, som LoginMenu exempelvis.
 class EmptyMenu : Menu
 {
-    public override void Display() {}
+    public override void Display() { }
 }

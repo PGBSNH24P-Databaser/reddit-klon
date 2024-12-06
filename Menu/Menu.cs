@@ -4,22 +4,29 @@
 // - En funktion för att exekvera kommandon (som tillhör menyn)
 // - En Display funktion som är till för att "visa upp" menyn
 //    - Den är abstrakt eftersom det är dem specifika menyerna (Login, User) som bestämmer hur de ser ut
-public abstract class Menu {
+public abstract class Menu
+{
 
     private List<Command> commands = new List<Command>();
 
     // Add command to list.
-    public void AddCommand(Command command) {
+    // Anropa denna för att "registrera", eller "koppla", ett specifikt kommando till menyn.
+    public void AddCommand(Command command)
+    {
         this.commands.Add(command);
     }
 
-    public void ExecuteCommand(string inputCommand) {
+    // Kör ett kommando som är registrerat med "AddCommand", om ett sådant finns.
+    public void ExecuteCommand(string inputCommand)
+    {
         // Dela upp kommandosträng (e.g login username password) i ord: ["login", "username", "password"]
         // Varje ord blir ett element i resultat arrayen (commandParts).
         string[] commandParts = inputCommand.Split(" ");
 
-        foreach (Command command in commands) {
-            if (command.Name.Equals(commandParts[0])) {
+        foreach (Command command in commands)
+        {
+            if (command.Name.Equals(commandParts[0]))
+            {
                 command.Execute(commandParts);
                 return;
             }

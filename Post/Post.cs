@@ -1,3 +1,4 @@
+// En databas model som representerar ett inlägg (en rad i posts tabellen).
 public class Post {
     public Guid Id { get; init; }
     public User? User { get; init; }
