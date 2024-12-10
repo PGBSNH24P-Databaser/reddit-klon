@@ -34,6 +34,7 @@ public class PostgresPostService : IPostService
             Content = content,
             CreatedDateTime = DateTime.Now,
             ParentPostId = null,
+            OriginalPostId = null,
         };
 
         // Kör SQL kod för att spara inlägget i databasen
@@ -124,5 +125,46 @@ public class PostgresPostService : IPostService
         }
 
         return posts;
+    }
+
+    // Denna funktion används för att skapa kommentarer och inte "vanliga"/huvud-inlägg
+    public void AddCommentToPost(string content, Guid parentPostId, Guid originalPostId)
+    {
+        // Hämta inloggad användare, eller kasta exception om ingen är inloggad.
+        var user = userService.GetLoggedInUser();
+        if (user == null)
+        {
+            throw new ArgumentException("You are not logged in.");
+        }
+
+        // Skapa ett objekt som representerar inlägget
+        var post = new Post
+        {
+            Id = Guid.NewGuid(),
+            User = user,
+            Content = content,
+            CreatedDateTime = DateTime.Now,
+            ParentPostId = parentPostId,
+            OriginalPostId = originalPostId,
+        };
+
+        // Kör SQL kod för att spara inlägget i databasen
+        var sql = @"INSERT INTO posts (post_id, user_id, parent_post_id, original_post_id, content, creation_timestamp) VALUES (
+            @id,
+            @user_id,
+            @parent_post_id,
+            @original_post_id,
+            @content,
+            @created_date
+        )";
+        using var cmd = new NpgsqlCommand(sql, this.connection);
+        cmd.Parameters.AddWithValue("@id", post.Id);
+        cmd.Parameters.AddWithValue("@user_id", post.User.Id);
+        cmd.Parameters.AddWithValue("@parent_post_id", post.ParentPostId);
+        cmd.Parameters.AddWithValue("@original_post_id", post.OriginalPostId);
+        cmd.Parameters.AddWithValue("@content", post.Content);
+        cmd.Parameters.AddWithValue("@created_date", post.CreatedDateTime);
+
+        cmd.ExecuteNonQuery();
     }
 }
