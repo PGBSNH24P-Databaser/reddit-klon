@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Npgsql;
 
 // Vår PostgreSQL implementation av IUserService.
@@ -14,7 +16,8 @@ public class PostgresUserService : IUserService
     private Guid? loggedInUser = null;
 
     // Vi behöver endast en NpgsqlConnection - som kan återanvändas - och därför tar vi in den med hjälp av en constructor.
-    public PostgresUserService(NpgsqlConnection connection) {
+    public PostgresUserService(NpgsqlConnection connection)
+    {
         this.connection = connection;
     }
 
@@ -23,7 +26,7 @@ public class PostgresUserService : IUserService
     public User? GetLoggedInUser()
     {
         // Om ingen är inlogged så kan vi returnera null eftersom det inte finns något att hämta från databasen.
-        if (loggedInUser == null) 
+        if (loggedInUser == null)
         {
             return null;
         }
@@ -33,16 +36,18 @@ public class PostgresUserService : IUserService
         using var cmd = new NpgsqlCommand(sql, this.connection);
         // Använd parameters istället för string concatenation för att undvika SQL injections
         cmd.Parameters.AddWithValue("@id", loggedInUser);
-        
+
         using var reader = cmd.ExecuteReader();
         // Om ingen användare matchade - returnera null
-        if (!reader.Read()) {
+        if (!reader.Read())
+        {
             return null;
         }
 
         // (annars) läs informationen från queryns resultat och returnera det i form av ett User objekt
 
-        var user = new User {
+        var user = new User
+        {
             Id = reader.GetGuid(0),
             Name = reader.GetString(1),
             Password = reader.GetString(2)
@@ -56,29 +61,44 @@ public class PostgresUserService : IUserService
     public User? Login(string username, string password)
     {
         // Med username och password - försök att hitta en matchande användare.
-        var sql = @"SELECT * FROM users WHERE name = @username AND password = @password";
+        var sql = @"SELECT * FROM users WHERE name = @username";
         // Använd parameters istället för string concatenation för att undvika SQL injections
         using var cmd = new NpgsqlCommand(sql, this.connection);
         cmd.Parameters.AddWithValue("@username", username);
-        cmd.Parameters.AddWithValue("@password", password);
-        
+
         using var reader = cmd.ExecuteReader();
-        // Om ingen användare matchade - returner null
-        if (!reader.Read()) {
-            return null;
+        while (reader.Read())
+        {
+            var user = new User
+            {
+                Id = reader.GetGuid(0),
+                Name = reader.GetString(1),
+                Password = reader.GetString(2)
+            };
+
+            string[] passwordSplit = user.Password.Split(":");
+            string passwordHash = passwordSplit[0];
+            string salt = passwordSplit[1];
+
+            byte[] fullBytes = Encoding.UTF8.GetBytes(password + salt);
+            using (HashAlgorithm algorithm = SHA256.Create())
+            {
+                byte[] hash = algorithm.ComputeHash(fullBytes);
+                password = GetHexString(hash);
+            }
+
+            if (!passwordHash.Equals(password))
+            {
+                continue;
+            }
+
+            // hämta information från resultat och returnera det i form av ett User objekt
+            loggedInUser = user.Id;
+            return user;
         }
 
-        // (annars) hämta information från resultat och returnera det i form av ett User objekt
-
-        var user = new User {
-            Id = reader.GetGuid(0),
-            Name = reader.GetString(1),
-            Password = reader.GetString(2)
-        };
-
-        loggedInUser = user.Id;
-
-        return user;
+        // Om ingen användare matchade - returner null
+        return null;
     }
 
     public void Logout()
@@ -88,7 +108,22 @@ public class PostgresUserService : IUserService
 
     public User RegisterUser(string username, string password)
     {
-        var user = new User {
+        // Generate salt
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        string saltString = GetHexString(salt);
+
+        byte[] fullBytes = Encoding.UTF8.GetBytes(password + saltString);
+
+        using (HashAlgorithm algorithm = SHA256.Create())
+        {
+            byte[] hash = algorithm.ComputeHash(fullBytes);
+            password = GetHexString(hash);
+        }
+
+        password += ":" + saltString;
+
+        var user = new User
+        {
             Id = Guid.NewGuid(),
             Name = username,
             Password = password
@@ -103,9 +138,18 @@ public class PostgresUserService : IUserService
         cmd.Parameters.AddWithValue("@id", user.Id);
         cmd.Parameters.AddWithValue("@name", user.Name);
         cmd.Parameters.AddWithValue("@password", user.Password);
-        
+
         cmd.ExecuteNonQuery();
 
         return user;
+    }
+
+    private static string GetHexString(byte[] array)
+    {
+        StringBuilder sb = new StringBuilder();
+        foreach (byte b in array)
+            sb.Append(b.ToString("X2"));
+
+        return sb.ToString();
     }
 }

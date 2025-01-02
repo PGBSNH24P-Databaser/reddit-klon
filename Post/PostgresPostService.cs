@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Npgsql;
 
 // Vår PostgreSQL implementation av IPostService.
@@ -157,6 +158,10 @@ public class PostgresPostService : IPostService
             @content,
             @created_date
         )";
+
+        // Det är extremt viktigt att vi INTE använder string concatenation. Annars utsätter vi oss för SQL injections.
+        // string sql = "INSERT INTO ..." + post.Id + content;
+
         using var cmd = new NpgsqlCommand(sql, this.connection);
         cmd.Parameters.AddWithValue("@id", post.Id);
         cmd.Parameters.AddWithValue("@user_id", post.User.Id);

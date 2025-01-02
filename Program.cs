@@ -1,7 +1,8 @@
 ﻿namespace reddit_clone;
 
 using Npgsql;
-
+using System.Security.Cryptography;
+using System.Text;
 /*
 
 users:
@@ -26,10 +27,17 @@ class Program
 {
     static void Main(string[] args)
     {
+        // Bättre sätt att använda connection strings
+        // string connectionString = Environment.GetEnvironmentVariable("APP_CONNECTION_STRING")!;
+
+        // Eller
+        //string password = File.ReadAllText("password.txt");
+        //string connectionString = $"Host=localhost;Username=postgres;Password=${password};Database=reddit";
+
         string connectionString = "Host=localhost;Username=postgres;Password=password;Database=reddit";
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
-        
+
         var createTablesSql = @"
             CREATE TABLE IF NOT EXISTS users (
                 user_id UUID PRIMARY KEY,
@@ -61,11 +69,15 @@ class Program
         Menu initialMenu = new LoginMenu(userService, menuService, postService);
         menuService.SetMenu(initialMenu);
 
-        while(true) {
+        while (true)
+        {
             string? inputCommand = Console.ReadLine();
-            if (inputCommand != null) {
+            if (inputCommand != null)
+            {
                 menuService.GetMenu().ExecuteCommand(inputCommand);
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
